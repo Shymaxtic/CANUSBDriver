@@ -50,7 +50,21 @@ struct usb_can_driver_t {
 
 #define to_usb_can_dev(kr)  container_of(kr, struct usb_can_driver_t, kref)
 
-static struct usb_driver usb_can_driver;
+static int usb_can_probe(struct usb_interface *interface, const struct usb_device_id *id) {
+    int ret = -ENOMEM;
+    return ret;
+}
+
+static void usb_can_disconnect(struct usb_interface *interface) {
+    
+}
+
+static struct usb_driver usb_can_driver = {
+    .name = "qusbcan",
+    .id_table = id_table,
+    .probe = usb_can_probe,
+    .disconnect = usb_can_disconnect
+};
 
 static int __init usb_can_init(void) {
     int result;
