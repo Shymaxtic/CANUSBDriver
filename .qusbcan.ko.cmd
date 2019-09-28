@@ -1,1 +1,0 @@
-cmd_/home/quynhpp/Workspace/CANUSBdriver/qusbcan.ko := ld -r -m elf_x86_64  -z max-page-size=0x200000 -T ./scripts/module-common.lds  --build-id  -o /home/quynhpp/Workspace/CANUSBdriver/qusbcan.ko /home/quynhpp/Workspace/CANUSBdriver/qusbcan.o /home/quynhpp/Workspace/CANUSBdriver/qusbcan.mod.o ;  true

@@ -1,1 +1,0 @@
-cmd_/home/quynhpp/Workspace/CANUSBdriver/qusbcan.o := ld -m elf_x86_64  -z max-page-size=0x200000    -r -o /home/quynhpp/Workspace/CANUSBdriver/qusbcan.o /home/quynhpp/Workspace/CANUSBdriver/can_usb_driver_main.o 
