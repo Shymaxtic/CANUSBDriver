@@ -109,13 +109,25 @@ static ssize_t usb_can_write(struct file *file, const char __user *user_buffer, 
     return ret;
 }
 
+static long usb_can_ioctl(struct file* file, unsigned int cmd, unsigned long arg__) {
+    struct usb_can_dev_t *dev;
+    int ret = 0;
+    dev = (struct usb_can_dev_t*)file->private_data;
+    switch (cmd)
+    {
+        default:
+        break;
+    }
+    return ret;
+}
 
 static struct file_operations usb_can_fops = {
-    .owner =	THIS_MODULE,
-	.read =		usb_can_read,
-	.write =	usb_can_write,
-	.open =		usb_can_open,
-	.release =	usb_can_release,
+    .owner              = THIS_MODULE,
+	.read               = usb_can_read,
+	.write              = usb_can_write,
+    .unlocked_ioctl     = usb_can_ioctl,
+	.open               = usb_can_open,
+	.release            = usb_can_release,
 };
 
 /* 
