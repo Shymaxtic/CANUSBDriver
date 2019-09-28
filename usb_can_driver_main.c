@@ -24,6 +24,7 @@
 #include <linux/module.h>
 #include <linux/usb.h>
 #include <linux/slab.h>
+#include "usb_can_file_ioctl.h"
 
 #define D_VENDOR_ID         0x1CBE
 #define D_PRODUCT_ID        0x0003
@@ -112,9 +113,21 @@ static ssize_t usb_can_write(struct file *file, const char __user *user_buffer, 
 static long usb_can_ioctl(struct file* file, unsigned int cmd, unsigned long arg__) {
     struct usb_can_dev_t *dev;
     int ret = 0;
+    int wrote_cnt = 0;
     dev = (struct usb_can_dev_t*)file->private_data;
     switch (cmd)
     {
+        case USB_CAN_FILE_IOCTL_PING: {
+            ret = usb_bulk_msg(dev->udev, usb_sndbulkpipe(dev->udev, dev->bulk_out_endpointAddr),
+                                "Q", 1, &wrote_cnt, 1000);
+            if (ret) {
+                pr_err("Failed to send out bulk message with error %d", ret);
+                break;
+            }           
+        }
+        break;
+        case USB_CAN_FILE_IOCTL_GET_BAUDRATE: {}
+        break;
         default:
         break;
     }

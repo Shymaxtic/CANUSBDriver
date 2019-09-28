@@ -1,5 +1,5 @@
 obj-m	:= qusbcan.o
-qusbcan-y := can_usb_driver_main.o 
+qusbcan-y := usb_can_driver_main.o 
 
 KERNELDIR ?= /lib/modules/$(shell uname -r)/build
 PWD       := $(shell pwd)
