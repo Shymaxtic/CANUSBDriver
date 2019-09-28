@@ -49,6 +49,7 @@ struct usb_can_dev_t {
 };
 
 #define to_usb_can_dev(kr)  container_of(kr, struct usb_can_dev_t, kref)
+static struct usb_driver usb_can_driver;
 
 // delete device struct when kref is zero.
 static void usb_can_delete(struct kref *kref) {
@@ -60,11 +61,41 @@ static void usb_can_delete(struct kref *kref) {
 }
 
 static int usb_can_open(struct inode *inode, struct file *file) {
+    struct usb_can_dev_t *dev = NULL;
+    struct usb_interface *interface = NULL;
+    int subminor = 0;
     int ret = 0;
+
+    subminor = iminor(inode);
+    interface = usb_find_interface(&usb_can_driver, subminor);
+    if (!interface) {
+        pr_err("%s - error, can't find device for minor %d", __FUNCTION__, subminor);
+        ret = -ENODEV;
+        goto exit;
+    }
+    dev = usb_get_intfdata(interface);
+    if (!dev) {
+        ret = -ENODEV;
+        goto exit;
+    }
+    // increment our usage count for the device.
+    kref_get(&dev->kref);
+
+    // save our object in the file's private struct.
+    file->private_data = dev;
+exit:
+
     return ret;
 }
 
 static int usb_can_release(struct inode *inode, struct file *file) {
+    struct usb_can_dev_t* dev = NULL;
+    dev = (struct usb_can_dev_t*)file->private_data;
+    if (!dev) {
+        return -ENODEV;
+    }
+    // decrement the count on our device.
+    kref_put(&dev->kref, usb_can_delete);
     return 0;
 }
 
