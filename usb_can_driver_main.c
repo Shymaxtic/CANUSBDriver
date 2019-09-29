@@ -44,7 +44,7 @@ MODULE_DEVICE_TABLE(usb, id_table);
 struct usb_can_dev_t {
     struct usb_device *udev;    // usb device.
     struct usb_interface* uif;  // usb interface.
-    unsigned char*  bulk_in_buff;   // buffer to receive data.
+    unsigned char*  bulk_in_buffer;   // buffer to receive data.
     size_t  bulk_in_size;           // size of receive buffer.
     __u8    bulk_in_endpointAddr;
     __u8    bulk_out_endpointAddr;
@@ -59,7 +59,7 @@ static void usb_can_delete(struct kref *kref) {
     struct usb_can_dev_t *dev = to_usb_can_dev(kref);
     // release ref counter usb device in this driver.
     usb_put_dev(dev->udev);
-    kfree(dev->bulk_in_buff);
+    kfree(dev->bulk_in_buffer);
     kfree(dev);
 }
 
@@ -137,16 +137,9 @@ static long usb_can_ioctl(struct file* file, unsigned int cmd, unsigned long arg
     struct urb *urb = NULL;
     char* buf = NULL;
     int count = 0;
-    switch (cmd)
-    {
-        case USB_CAN_FILE_IOCTL_PING: {
-            // ret = usb_bulk_msg(dev->udev, usb_sndbulkpipe(dev->udev, dev->bulk_out_endpointAddr),
-            //                     "Q", 1, &wrote_cnt, 1000);
-            // if (ret) {
-            //     pr_err("Failed to send out bulk message with error %d", ret);
-            //     break;
-            // }      
-            // create an urb, a buffer for ti, and copy data to the urb.    
+    switch (cmd) {
+        case USB_CAN_FILE_IOCTL_PING: {     
+            // create an urb, a buffer for it, and copy data to the urb.    
             count = 1; 
             urb = usb_alloc_urb(0, GFP_KERNEL);
             if (!urb) {
@@ -158,7 +151,7 @@ static long usb_can_ioctl(struct file* file, unsigned int cmd, unsigned long arg
                 ret = -ENOMEM;
                 goto error;
             }
-            memcpy(buf, "Q", count);
+            memcpy(buf, "q", count);
             // initialize the urb 
             usb_fill_bulk_urb(urb, dev->udev, usb_sndbulkpipe(dev->udev, dev->bulk_out_endpointAddr),
                             buf, count, usb_can_write_bulk_callback, dev);
@@ -183,9 +176,21 @@ static long usb_can_ioctl(struct file* file, unsigned int cmd, unsigned long arg
                 ret = -EINVAL;
                 break;
             }
+            count = sizeof(uint64_t);
             // TODO: get baudrate from device.
+            ret = usb_bulk_msg(dev->udev,
+			      usb_rcvbulkpipe(dev->udev, dev->bulk_in_endpointAddr),
+			      dev->bulk_in_buffer,
+			      min(dev->bulk_in_size, count),
+			      (int *) &count, HZ*10);
             if (ret == 0) {
-                put_user(baudrate, user_params);
+                // put_user(dev->bulk_in_buffer, user_params);
+                if (copy_to_user(user_params, dev->bulk_in_buffer, count)) {
+                    pr_err("%s - Faild to copy to user %d", __FUNCTION__, ret);
+                    ret = -EFAULT;
+                }
+            } else {
+                pr_err("%s - Failed to read urb with error %d", __FUNCTION__, ret);
             }
         }
         break;
@@ -254,8 +259,8 @@ static int usb_can_probe(struct usb_interface *interface, const struct usb_devic
                 buffer_size = endpoint->wMaxPacketSize;
                 dev->bulk_in_size = buffer_size;
                 dev->bulk_in_endpointAddr = endpoint->bEndpointAddress;
-                dev->bulk_in_buff = kmalloc(buffer_size, GFP_KERNEL);
-                if (!dev->bulk_in_buff) {
+                dev->bulk_in_buffer = kmalloc(buffer_size, GFP_KERNEL);
+                if (!dev->bulk_in_buffer) {
                     pr_err("Failed to allocate bulk_in buffer");
                     goto error;
                 }
