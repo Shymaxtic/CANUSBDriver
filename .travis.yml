@@ -1,8 +1,8 @@
 language: c
 os: linux
 dist: bionic
-before_install: 
-  - sudo apt-get install linux-headers-`uname -r`
+# before_install: 
+#   - sudo apt-get install linux-headers-`uname -r`
 
 env:
   global:
@@ -19,7 +19,7 @@ addons:
       name: "Shymaxtic/CANUSBDriver"
       description: "USB CAN Linux driver"
     notification_email: shymaxtic@gmail.com
-#     build_command_prepend: "<Your build preprocessing command here>"
+    build_command_prepend: "- sudo apt-get install linux-headers-`uname -r`"
     build_command: "make"
     branch_pattern: coverity_scan
     
