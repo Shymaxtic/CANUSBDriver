@@ -1,26 +1,27 @@
 language: c
 os: linux
 dist: bionic
-before_install: 
+# before_install: 
+#   - sudo apt-get install linux-headers-`uname -r`
+
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "MoIxh1lanUqL1c56VyVECW7I+CyARUPGofu0Va/ERbw0+g3NDCz1qYRmWhhXK3LEwbyGSYxWn/92hRliVqss8lcrSYGsC6GH4pr2ALVKV4J8tGoNLlOod/q5GVPMzolzj6q+s/JcJmu+KbX9ivHvo6tqUDTtQiUP7CHh823FSnOL7bONSmwYIF0Cpug9eIRQEDKH10YV4pT9NxBSGqccTdqBTqsrgd6tIWwp9sYl/TtQ6h2e4n9OCROl6bTCZmwPBjjrfHbmC1ehESMaEyMHDLty5K2EtWWFYYqJ/O3iSy1Y7Ffz5xdvNr01P0kVPQ+AWhsqDEiREe0tYtKftgJNfwTUHhffbVBmeDmzdFfZCAYwIaFVoZcSIgk+gmkf3tTpFgDjnJhBK+qrfUf0sHe6jYPU9FdoO2cio9j8fND1CCIfwsgvCvwgogDoj1uv3pds/xnPA0vS48fsdsgCcsRachmWr1a9p2o5oMWlNZ1n5I8KMERFBRLWt4gj4mxzXm9ibBP71L31aPKmNn3VWb/tIQHJDKbdXsJNnlWo51uz2hp1bkcWs3yS7Yi26FDqqKRAjQuFmSKlxN3xr+pmMb5vrJB5o4Rvwz45OIODLWdLeE/7SoXffb2q14KWdjuAne2ot215lENYe5oo3/oW+IrD6UuU5NKdhu3dBeaPrl5ac/U="
+
+before_install:
   - sudo apt-get install linux-headers-`uname -r`
+  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
-# env:
-#   global:
-#    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-#    #   via the "travis encrypt" command using the project repo's public key
-#    - secure: "MoIxh1lanUqL1c56VyVECW7I+CyARUPGofu0Va/ERbw0+g3NDCz1qYRmWhhXK3LEwbyGSYxWn/92hRliVqss8lcrSYGsC6GH4pr2ALVKV4J8tGoNLlOod/q5GVPMzolzj6q+s/JcJmu+KbX9ivHvo6tqUDTtQiUP7CHh823FSnOL7bONSmwYIF0Cpug9eIRQEDKH10YV4pT9NxBSGqccTdqBTqsrgd6tIWwp9sYl/TtQ6h2e4n9OCROl6bTCZmwPBjjrfHbmC1ehESMaEyMHDLty5K2EtWWFYYqJ/O3iSy1Y7Ffz5xdvNr01P0kVPQ+AWhsqDEiREe0tYtKftgJNfwTUHhffbVBmeDmzdFfZCAYwIaFVoZcSIgk+gmkf3tTpFgDjnJhBK+qrfUf0sHe6jYPU9FdoO2cio9j8fND1CCIfwsgvCvwgogDoj1uv3pds/xnPA0vS48fsdsgCcsRachmWr1a9p2o5oMWlNZ1n5I8KMERFBRLWt4gj4mxzXm9ibBP71L31aPKmNn3VWb/tIQHJDKbdXsJNnlWo51uz2hp1bkcWs3yS7Yi26FDqqKRAjQuFmSKlxN3xr+pmMb5vrJB5o4Rvwz45OIODLWdLeE/7SoXffb2q14KWdjuAne2ot215lENYe5oo3/oW+IrD6UuU5NKdhu3dBeaPrl5ac/U="
-
-# before_install:
-#   - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
-
-# addons:
-#   coverity_scan:
-#     project:
-#       name: "Shymaxtic/CANUSBDriver"
-#       description: "USB CAN Linux driver"
-#     notification_email: shymaxtic@gmail.com
-#     build_command_prepend: "sudo apt-get install linux-headers-`uname -r`"
-#     build_command: "make"
-#     branch_pattern: coverity_scan
+addons:
+  coverity_scan:
+    project:
+      name: "Shymaxtic/CANUSBDriver"
+      description: "USB CAN Linux driver"
+    notification_email: shymaxtic@gmail.com
+    build_command_prepend: "sudo apt-get install linux-headers-`uname -r`"
+    build_command: "make"
+    branch_pattern: coverity_scan
     
 script: make
