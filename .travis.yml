@@ -1,7 +1,26 @@
 language: c
 os: linux
 dist: bionic
-before_install: 
-  - sudo apt-get install linux-headers-`uname -r`
-script: make
+# before_install: 
+#   - sudo apt-get install linux-headers-`uname -r`
 
+env:
+  global:
+   # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
+   #   via the "travis encrypt" command using the project repo's public key
+   - secure: "kmFLomEbStx26rz7r0TT8U5cCf+BrZhScAGaz4zRRhRPPujHvn1DH70uAyPRs01q16dj683LPZNtOatQDb1E1UoUw7uTXZQuXaUqbHY9S6QYTIaehgcdwioD3ZyV5UWeOH8qTQ3NQG0YNirnGimj1IN8ZKyUkLlX3WGZvhYE9OyTRT3dN87Sc9Esp+iH7EeIt6b+Zlmp6DZ9yxTBu32FjhlEhuDut3OMZ4of9Co2tfp32BLLyxZIFcBPrEX4DEdOJs+pEMLCX0S9rkjEmNfswNSzgR5lThcLMKvPziWsIDjTE/9WWsv6g1J596sfw1tY7TTC5E9ZF+u41RPjtSl0Wmgsdjr6ZC+MmZo6Hw8D39YPPDnjbjq1RKMk5I5U2Vdpy94kqDOJNL5QX5J71KglvghVeqYBr/rTEiZhnW5mYBg/Gq+mtmKNQ2IbrgJCax3QZr68v++YxaBUur8ZP3xb3gg3yZQ2gbNZU7DwWP8slwqG1dwVmc0RWIob3mtbj1EBcciios6w2ZBN1+cFIv6kOcMFT3lHk9ejGBe7cVOFXnhXKzMVl5MgRNYaWLnFGRUtyOAJsxouYQtJTbjHUeW1EzmPsTfSnLsvTZFypeGOoWEGsTiVkCOysy/i7ptJxnVdCzGOYCEdk9K/6y9bHkV3HFpxzWWE3MTDVSS7xvqQ6ks="
+
+before_install:
+  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+
+addons:
+  coverity_scan:
+    project:
+      name: "Shymaxtic/CANUSBDriver"
+      description: "USB CAN Linux driver"
+    notification_email: shymaxtic@gmail.com
+#     build_command_prepend: "<Your build preprocessing command here>"
+    build_command: "make"
+    branch_pattern: master
+    
+script: make
