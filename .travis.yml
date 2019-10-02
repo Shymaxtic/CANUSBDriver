@@ -4,13 +4,11 @@ dist: bionic
 
 env:
   global:
-    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
-    #   via the "travis encrypt" command using the project repo's public key
     - secure: "I9PZs0QwQdjg6T7CLfZcLrlc/mF61t4Uw1aF5GCBQ2dSd1DkqV456Xbts0VgpliLESTaxmT6GHreAf3MjnRwkYgV2OBgiuNfQg05st6iprtpZq2jZHw3rpp4U85dp+BijmXFdVb1iQe1GxCwO5zgQVXQN7ht0FpwWT1cY/O0/n6u/G+v/glZRcmrQVA7hPVQoZZmhpWnDylPs0IpUbZi49a7FPpMSP641h9PpFKY5GMPVdupXkXgipeXNgZzY3SerIEsSccrJIpSzSo9U/bCsEnF4ebK93rpZRg9sdtmkKir5Y69nmVM/Ky9LMafkDc8JZwjQjULy8hlFmppkahRS8jI8IJSQS2v+F87l7ZeJKHhvS9YfOgklojuAh8aTJTchmEotU8oskPXKiwarBD5cVXgIYTvEzjx4bNT2r3Nhl/RxBObtFpuDktQMr/IdFJUih0gLV/mHpVUyvbFWTg6ir1s2IEJmM8LcweWUVelNxytDkVXsUwBRIvKqqYYNvgJHDS22iC9a3FaTGr7DkEEa835iWA6oYR02p+bN6Z4q6qzxT/letF9+muqU3shAm/HrLfqyeGxD3qEEEpI/8UxfkurALfBRuI9Xlb+3XFRp9HB3seSFWCfs7NkdKvZRTzWBGerHGaPLm3WzzFbmuU4Ym8Y8YhIT4P9i6WiUNiUjrg="
 
 before_install:
   - sudo apt-get install linux-headers-`uname -r`
-#   - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
 
 addons:
   coverity_scan:
