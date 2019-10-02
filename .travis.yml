@@ -8,7 +8,7 @@ env:
   global:
    # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created
    #   via the "travis encrypt" command using the project repo's public key
-   - secure: "M9TJO26zhSncF2ACtkaxXCdJAtam6we56bKpZoNvFGcEZHhzZHXawyZ2YhCTgMjBEp/6XBG9p+U2P20G4+ENMuwNev/Q7NnKpfyokbhYUN5fRBVEPbLC4spcnOu4M8ZARceFoWjQ4FZNEGerMDTl5V+BmzGjcKa0k0oF4mru6GKvvFXT/ol3rxTbEeaNSzbrP3HlQomvJ8goyjAQEbsXmBy0cOUUaV3iODGlL/Md6XtirqTsl5WrsXAZdXfnd3igEHr1/C3IWwY2mqfKSHRkW5VpQc2pe7mHja12N3h2a7bwlXX/1gsLpnc/wp+TddDdIokzvfSgT0Zi9OiDOaE2eOto5GBuiRBLCFp+ewDD6++GX35ZhneceSoMSnZcupp3b465P5ZcwoP3kN8KTB5ibBDmbwQDehBvCqKn2C0dvzfE0e9kl1C905Nqx3hXvFdDSyDfM5Ao6yYbh55P+pJ22zB1dvEBHAuqzLEcwLlLqGPnMlB6JT9qR7h6G5sG9lz/QjakLKmy6k/2QcaGfnXWyRJy4GXjDvUtQgpTbDIz/dBZxCQ/GdNi3MTqt0NG6/4X2RNlaStFYZAiQZY+jJ3xJ0HIbE2evBwwcVppcniKHU3p8uExJt7vKiSpa0jIouOiTwpcCzfP/3qO6afEuP/R+EgGzpxuKISIBovQkydjzVk="
+   - secure: "KfjLwtQyYuiElVP+kuqvI1KzZn14C36on+oLjIuuVJPq0rgy/h8ENggDSSOpiW3PeizFOKPtmxmDkyAAwwY40HeV2lxYvcgcUFfapoU5g7SwSsBzrnHoybp3ANIGDHd2hA3yzNWH5Ovoqv9jAV40uEeZNSPPqpk1hrvde3hBXohvF4u9JcPD+iB2punUsHtkcsCqNkrc9or1yfqGokN2R6z/6FmOzhAqwPxJvIuIv4lo0eeJCHgFLR19fMGhLfF2dA/jZhX8PZrjlBSz0v9oxBh8vHif5M1DgjIYHwIVRyscF/WVTJ+eD5hGfaRMDXzzB66ULX/GJ/EpYXKcOSqfOTK1cFh5t0fx0nsZ+6mZ+xZwZ0On6+OyZ35ytEVIK8mqDDR0TJ2vVhlPWm0Yb/zX9QIWXVsc1Pyn6m2I2iYlw/eEzXcxTjNp78FHL/nZycrEd+HBw3g9r7ycDon0oPSAYSc75khikcKvXC2WpD9EKtj3IRQKWx+Bl/f7ujFYBmgXwZI34C5CYKE1hAmf2NotRbpbI0M19+X+KBbPdlg9ExZfv0aKyomgGME6tpvLlfrRKeFEzi2vvk6UBO9QSlAoCDle7TbnJ1WxPm/16Ym4k8nQlinaj9VT0UjSmb9Xu2Sz4RtXKzukm64hdWhhxscpNgV/h0YWgp8O2eXDnady+Lc="
 
 before_install:
   - sudo apt-get install linux-headers-`uname -r`
@@ -22,6 +22,6 @@ addons:
     notification_email: shymaxtic@gmail.com
     build_command_prepend: ""
     build_command: "make"
-    branch_pattern: master
+    branch_pattern: coverity_scan
     
 script: make
