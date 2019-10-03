@@ -26,6 +26,8 @@
 #include <linux/slab.h>
 #include <linux/uaccess.h>
 #include "usb_can_file_ioctl.h"
+#include "usb_can_data.h"
+#include "usb_can_api.h"
 
 #define D_VENDOR_ID         0x1CBE
 #define D_PRODUCT_ID        0x0003
@@ -37,24 +39,13 @@ static struct usb_device_id id_table[] = {
 };
 MODULE_DEVICE_TABLE(usb, id_table);
 
-// Minor range for my devices from the usb maintainer.
-#define USB_CAN_MINOR_BASE  192
-
-// my data struct 
-struct usb_can_dev_t {
-    struct usb_device *udev;    // usb device.
-    struct usb_interface* uif;  // usb interface.
-    unsigned char*  bulk_in_buffer;   // buffer to receive data.
-    size_t  bulk_in_size;           // size of receive buffer.
-    __u8    bulk_in_endpointAddr;
-    __u8    bulk_out_endpointAddr;
-    struct kref kref;
-};
-
+// get struct usb_can_dev_t containing kref.
 #define to_usb_can_dev(kr)  container_of(kr, struct usb_can_dev_t, kref)
+
+// the usb driver.
 static struct usb_driver usb_can_driver;
 
-// delete device struct when kref is zero.
+// function to delete device struct when kref is zero.
 static void usb_can_delete(struct kref *kref) {
     struct usb_can_dev_t *dev = to_usb_can_dev(kref);
     // release ref counter usb device in this driver.
@@ -63,6 +54,7 @@ static void usb_can_delete(struct kref *kref) {
     kfree(dev);
 }
 
+// function to open device file
 static int usb_can_open(struct inode *inode, struct file *file) {
     struct usb_can_dev_t *dev = NULL;
     struct usb_interface *interface = NULL;
@@ -87,10 +79,10 @@ static int usb_can_open(struct inode *inode, struct file *file) {
     // save our object in the file's private struct.
     file->private_data = dev;
 exit:
-
     return ret;
 }
 
+// function to close device file
 static int usb_can_release(struct inode *inode, struct file *file) {
     struct usb_can_dev_t* dev = NULL;
     dev = (struct usb_can_dev_t*)file->private_data;
@@ -102,96 +94,50 @@ static int usb_can_release(struct inode *inode, struct file *file) {
     return 0;
 }
 
+// function to read device file.
 static ssize_t usb_can_read(struct file *file, char __user *buffer, size_t count, loff_t *ppos) {
     int ret = 0;
     return ret;
 }
 
+// function to write device file.
 static ssize_t usb_can_write(struct file *file, const char __user *user_buffer, size_t count, loff_t *ppos) {
     int ret = 0;
     return ret;
 }
 
-
-static void usb_can_write_bulk_callback(struct urb *urb) {
-    struct usb_can_dev_t *dev = urb->context;
-    // sync/ asyn unlink faults are not errors.
-    if (urb->status && !(urb->status == -ENOENT || 
-	      urb->status == -ECONNRESET ||
-	      urb->status == -ESHUTDOWN)) {
-		dev_dbg(&dev->uif->dev,
-			"%s - nonzero write bulk status received: %d",
-			__FUNCTION__, urb->status);
-    }
-
-    /* free up our allocated buffer */
-	usb_free_coherent(urb->dev, urb->transfer_buffer_length,
-			urb->transfer_buffer, urb->transfer_dma);
-}
-
+// function to ioctl device file.
 static long usb_can_ioctl(struct file* file, unsigned int cmd, unsigned long arg__) {
     struct usb_can_dev_t *dev = NULL;
     int ret = 0;
-    // int wrote_cnt = 0;
     dev = (struct usb_can_dev_t*)file->private_data;
-    struct urb *urb = NULL;
-    char* buf = NULL;
-    int count = 0;
     switch (cmd) {
         case USB_CAN_FILE_IOCTL_PING: {     
-            // create an urb, a buffer for it, and copy data to the urb.    
-            count = 1; 
-            urb = usb_alloc_urb(0, GFP_KERNEL);
-            if (!urb) {
-                ret = -ENOMEM;
-                goto error;
-            }
-            buf = usb_alloc_coherent(dev->udev, count, GFP_KERNEL, &urb->transfer_dma); //TODO: read transfer_dma
-            if (!buf) {
-                ret = -ENOMEM;
-                goto error;
-            }
-            memcpy(buf, "q", count);
-            // initialize the urb 
-            usb_fill_bulk_urb(urb, dev->udev, usb_sndbulkpipe(dev->udev, dev->bulk_out_endpointAddr),
-                            buf, count, usb_can_write_bulk_callback, dev);
-            urb->transfer_flags |= URB_NO_TRANSFER_DMA_MAP;
-            
-            // send the data out the bulk port.
-            ret = usb_submit_urb(urb, GFP_KERNEL) ;
+            ret = usb_can_request_data(E_USB_CAN_PING, dev);
             if (ret) {
-                pr_err("%s - Failed to submit write urb with error %d", __FUNCTION__, ret);
                 goto error;
             }
-            
-            usb_free_urb(urb);
         }
         break;
         case USB_CAN_FILE_IOCTL_GET_BAUDRATE: {
             // cast arg_ to address of user space variable.
             uint64_t __user* user_params = (int64_t*)arg__;
-            // get data in kernel space.
-            uint64_t baudrate = 0;
-            if (unlikely(user_params == NULL)) {
+            if (unlikely(!user_params)) {
                 ret = -EINVAL;
                 break;
             }
-            count = sizeof(uint64_t);
-            // TODO: get baudrate from device.
-            ret = usb_bulk_msg(dev->udev,
-			      usb_rcvbulkpipe(dev->udev, dev->bulk_in_endpointAddr),
-			      dev->bulk_in_buffer,
-			      min(dev->bulk_in_size, count),
-			      (int *) &count, HZ*10);
-            if (ret == 0) {
+            ret = usb_can_request_data(E_USB_CAN_GET_BAUDRATE, dev);
+            if (ret) {
+                goto error;
+            } else {
                 // put_user(dev->bulk_in_buffer, user_params);
-                if (copy_to_user(user_params, dev->bulk_in_buffer, count)) {
+                usb_can_packet_t rcvPck;
+                memcpy(&rcvPck, dev->bulk_in_buffer, sizeof(usb_can_packet_t));
+                if (copy_to_user(user_params, rcvPck.data, sizeof(uint64_t))) {
                     pr_err("%s - Faild to copy to user %d", __FUNCTION__, ret);
                     ret = -EFAULT;
                 }
-            } else {
-                pr_err("%s - Failed to read urb with error %d", __FUNCTION__, ret);
-            }
+            } 
         }
         break;
         default:
@@ -199,9 +145,6 @@ static long usb_can_ioctl(struct file* file, unsigned int cmd, unsigned long arg
     }
     return ret;
 error:
-    usb_free_coherent(dev->udev, count, buf, urb->transfer_dma);
-    usb_free_urb(urb);
-    kfree(buf);
     return ret;
 }
 

@@ -28,12 +28,21 @@ int main(int argc, char** argv) {
     if (ret != 0) {
         std::cerr << "ERR: Failed to ioctl file with error: " << (int) ret << std::endl;
     }
-    uint64_t baudrate = 0;
-    ret = ioctl(fd, USB_CAN_FILE_IOCTL_GET_BAUDRATE, &baudrate);
-    if (ret) {
-        std::cerr << "ERR: Failed to USB_CAN_FILE_IOCTL_GET_BAUDRATE file with error" << (int) ret << std::endl;
-    } 
-    std::cout << "INFO: baudrate " << (int)baudrate << std::endl;
+    int tryTime = 100;
+    while (tryTime--)
+    {
+        uint64_t baudrate = 0;
+        ret = ioctl(fd, USB_CAN_FILE_IOCTL_GET_BAUDRATE, &baudrate);
+        if (ret) {
+            std::cerr << "ERR: Failed to USB_CAN_FILE_IOCTL_GET_BAUDRATE file with error" << (int) ret << std::endl;
+        } else {
+            std::cout << "INFO: baudrate " << (int)baudrate << std::endl;
+        }
+        usleep(10000);
+    }
+    
+    
     close(fd);
+    std::cout << "Finished test\n";
     return 0;
 }

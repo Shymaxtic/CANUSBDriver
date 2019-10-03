@@ -2,6 +2,8 @@
     "files.associations": {
         "usb.h": "c",
         "kernel.h": "c",
-        "algorithm": "c"
+        "algorithm": "c",
+        "usb_can_api.h": "c",
+        "usb_can_file_ioctl.h": "c"
     }
 }
