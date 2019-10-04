@@ -37,7 +37,7 @@ typedef struct {
     uint32_t     u32id;
     uint8_t      u8info;
     uint8_t      au8data[8];
-} __attribute__ ((packed)) usb_can_frame_info_t;
+} __attribute__ ((packed)) usb_can_frame_info_t; // 13 bytes
 
 // data packet for my usb. maximum is equal 64 byte endpoint of TM4C123G
 typedef struct usb_can_packet_t {

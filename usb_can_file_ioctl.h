@@ -25,10 +25,11 @@
 #endif
 #include "usb_can_data.h"
 
+
 #define D_MAX_FRAME_PACKED  4
 
 typedef struct {
-    uint8_t                      u8frame_nums;
+    uint8_t                 u8frame_nums;
     usb_can_frame_info_t    frame_info[D_MAX_FRAME_PACKED];         // list of usb_can_frame_info_t
 } ioctl_can_frame_param_t;
 

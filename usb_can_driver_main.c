@@ -34,6 +34,9 @@
 #define D_PRODUCT_ID        0x0003
 #define D_MAX_USB_MEM_SIZE  512
 
+/**
+ * ID table for USB device.
+ **/
 static struct usb_device_id id_table[] = {
     {USB_DEVICE(D_VENDOR_ID, D_PRODUCT_ID)},
     {},
@@ -49,7 +52,7 @@ static struct usb_driver usb_can_driver;
 // function to delete device struct when kref is zero.
 static void usb_can_delete(struct kref *kref) {
     struct usb_can_dev_t *dev = to_usb_can_dev(kref);
-    // release ref counter usb device in this driver.
+    // release ref counter usb device in this driver. This session now does not refer to usb device.
     usb_put_dev(dev->udev);
     kfree(dev->bulk_in_buffer);
     kfree(dev);
@@ -111,7 +114,12 @@ static ssize_t usb_can_write(struct file *file, const char __user *user_buffer, 
 static long usb_can_ioctl(struct file* file, unsigned int cmd, unsigned long arg__) {
     struct usb_can_dev_t *dev = NULL;
     int ret = 0;
+    // get my device saved to this file.
     dev = (struct usb_can_dev_t*)file->private_data;
+    if (!dev) {
+        ret = -ENOMEM;
+        goto error;
+    }
     switch (cmd) {
         case USB_CAN_FILE_IOCTL_PING: {     
             ret = usb_can_request_data(E_USB_CAN_PING, dev);
@@ -125,19 +133,13 @@ static long usb_can_ioctl(struct file* file, unsigned int cmd, unsigned long arg
             uint64_t __user* user_params = (int64_t*)arg__;
             if (unlikely(!user_params)) {
                 ret = -EINVAL;
-                break;
+                goto error;
             }
             ret = usb_can_request_data(E_USB_CAN_GET_BAUDRATE, dev);
             if (ret) {
                 goto error;
             } else {
-                // put_user(dev->bulk_in_buffer, user_params);
-                usb_can_packet_t rcvPck;
-                memcpy(&rcvPck, dev->bulk_in_buffer, sizeof(usb_can_packet_t));
-                if (copy_to_user(user_params, rcvPck.au8data, sizeof(uint64_t))) {
-                    pr_err("%s - Faild to copy to user %d", __FUNCTION__, ret);
-                    ret = -EFAULT;
-                }
+                ret = usb_can_deserialize_to_ioclt_baudrate(user_params, dev->bulk_in_buffer);
             } 
         }
         break;
@@ -146,24 +148,13 @@ static long usb_can_ioctl(struct file* file, unsigned int cmd, unsigned long arg
             ioctl_can_frame_param_t __user* user_params = (ioctl_can_frame_param_t*)arg__;
             if (unlikely(!user_params)) {
                 ret = -EINVAL;
-                break;
+                goto error;
             }
             ret = usb_can_request_data(E_USB_CAN_GET_CAN_FRAME, dev);
             if (ret) {
                 goto error;
             } else {
-                // put_user(dev->bulk_in_buffer, user_params);
-                usb_can_packet_t rcvPck;
-                ioctl_can_frame_param_t kernel_params;
-                memcpy(&rcvPck, dev->bulk_in_buffer, sizeof(usb_can_packet_t));
-                // serialize data of usb packet to ioctl_can_frame_param_t
-                // get frame num
-                kernel_params.u8frame_nums = rcvPck.au8data[0];
-                memcpy(kernel_params.frame_info, &rcvPck.au8data[1], sizeof(kernel_params.frame_info));
-                if (copy_to_user(user_params, &kernel_params, sizeof(ioctl_can_frame_param_t))) {
-                    pr_err("%s - Faild to copy to user %d", __FUNCTION__, ret);
-                    ret = -EFAULT;
-                }
+                ret = usb_can_deserialize_to_ioclt_can_frame(user_params, dev->bulk_in_buffer);
             } 
         }
         break;
@@ -194,6 +185,9 @@ static struct usb_class_driver usb_can_class = {
 	.minor_base = USB_CAN_MINOR_BASE,
 };
 
+/**
+ * function called when usb device is plugged.
+ **/
 static int usb_can_probe(struct usb_interface *interface, const struct usb_device_id *id) {
     struct usb_can_dev_t *dev = NULL;
     struct usb_host_interface *if_desc = NULL;
@@ -208,9 +202,10 @@ static int usb_can_probe(struct usb_interface *interface, const struct usb_devic
         pr_err("Out of memory");
         goto error;
     }
+    // init kernel reference count for this device struct. This session now releated to my device struct.
     kref_init(&dev->kref);
 
-    // get ref counter on usb device.
+    // increase ref counter on usb device. I am refering to usb device on this interface.
     dev->udev = usb_get_dev(interface_to_usbdev(interface));
     dev->uif = interface;
 
@@ -251,7 +246,7 @@ static int usb_can_probe(struct usb_interface *interface, const struct usb_devic
 		goto error;
 	}
 
-    // save our data pointer in this interface device.
+    // save my device struct to this interface device.
     usb_set_intfdata(interface, dev);
 
     // ready to register device now.
@@ -272,17 +267,21 @@ error:
     return ret;
 }
 
+/**
+ * function called when usb device is unplugged.
+ **/
 static void usb_can_disconnect(struct usb_interface *interface) {
     struct usb_can_dev_t *dev = NULL;
     int minor = interface->minor;
 
+    // get my saved device struct from this interface device.
     dev = usb_get_intfdata(interface);
     usb_set_intfdata(interface, NULL);
 
     // give back our minor.
     usb_deregister_dev(interface, &usb_can_class);
 
-    // decrement our usage count.
+    // decrement our usage count. This session is not related to my device struct. 
     kref_put(&dev->kref, usb_can_delete);
 
     dev_info(&interface->dev, "USB CAN device #%d now disconnected", minor);
