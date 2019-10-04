@@ -17,33 +17,30 @@
  * along with CANUSBdriver.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef _USB_CAN_DRIVER_H_
+#define _USB_CAN_DRIVER_H_
 
-#ifndef _USB_CAN_DATA_H_
-#define _USB_CAN_DATA_H_
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/usb.h>
+#include <linux/slab.h>
+#include <linux/uaccess.h>
+
+// Minor range for my devices from the usb maintainer.
+#define USB_CAN_MINOR_BASE  192
 
 
-#define D_USB_PACKET_MAX_LEN        63
-
-typedef enum {
-    E_USB_CAN_PING = 0,
-    E_USB_CAN_GET_BAUDRATE,
-    E_USB_CAN_GET_CAN_FRAME
-} usb_can_packet_type_t;
-
-/*
- | Frame num  (1 byte) |[| ID (4 bytes) | info (1 byte) | data (8 bytes) |...]
-*/
-typedef struct {
-    uint32_t     u32id;
-    uint8_t      u8info;
-    uint8_t      au8data[8];
-} __attribute__ ((packed)) usb_can_frame_info_t;
-
-// data packet for my usb. maximum is equal 64 byte endpoint of TM4C123G
-typedef struct usb_can_packet_t {
-    uint8_t u8type;
-    uint8_t au8data[D_USB_PACKET_MAX_LEN];
-}   __attribute__ ((packed)) usb_can_packet_t;
+// my data struct 
+struct usb_can_dev_t {
+    struct usb_device *udev;            // usb device.
+    struct usb_interface* uif;          // usb interface.
+    unsigned char*  bulk_in_buffer;     // buffer to receive data.
+    size_t  bulk_in_size;               // size of receive buffer.
+    __u8    bulk_in_endpointAddr;       // in endpoint address.
+    __u8    bulk_out_endpointAddr;      // out endpoint address.
+    struct kref kref;
+};
 
 
 #endif

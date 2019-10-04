@@ -4,6 +4,11 @@
         "kernel.h": "c",
         "algorithm": "c",
         "usb_can_api.h": "c",
-        "usb_can_file_ioctl.h": "c"
+        "usb_can_file_ioctl.h": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c",
+        "usb_can_driver.h": "c",
+        "usb_can_data.h": "c"
     }
 }

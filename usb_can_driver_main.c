@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2019 quynhpp
+ * Copyright (C) 2019 Shymaxtic
  * 
  * This file is part of CANUSBdriver.
  * 
@@ -28,6 +28,7 @@
 #include "usb_can_file_ioctl.h"
 #include "usb_can_data.h"
 #include "usb_can_api.h"
+#include "usb_can_driver.h"
 
 #define D_VENDOR_ID         0x1CBE
 #define D_PRODUCT_ID        0x0003
@@ -133,7 +134,33 @@ static long usb_can_ioctl(struct file* file, unsigned int cmd, unsigned long arg
                 // put_user(dev->bulk_in_buffer, user_params);
                 usb_can_packet_t rcvPck;
                 memcpy(&rcvPck, dev->bulk_in_buffer, sizeof(usb_can_packet_t));
-                if (copy_to_user(user_params, rcvPck.data, sizeof(uint64_t))) {
+                if (copy_to_user(user_params, rcvPck.au8data, sizeof(uint64_t))) {
+                    pr_err("%s - Faild to copy to user %d", __FUNCTION__, ret);
+                    ret = -EFAULT;
+                }
+            } 
+        }
+        break;
+        case USB_CAN_FILE_IOCTL_GET_CAN_FRAME: {
+            // cast arg_ to address of user space.
+            ioctl_can_frame_param_t __user* user_params = (ioctl_can_frame_param_t*)arg__;
+            if (unlikely(!user_params)) {
+                ret = -EINVAL;
+                break;
+            }
+            ret = usb_can_request_data(E_USB_CAN_GET_CAN_FRAME, dev);
+            if (ret) {
+                goto error;
+            } else {
+                // put_user(dev->bulk_in_buffer, user_params);
+                usb_can_packet_t rcvPck;
+                ioctl_can_frame_param_t kernel_params;
+                memcpy(&rcvPck, dev->bulk_in_buffer, sizeof(usb_can_packet_t));
+                // serialize data of usb packet to ioctl_can_frame_param_t
+                // get frame num
+                kernel_params.u8frame_nums = rcvPck.au8data[0];
+                memcpy(kernel_params.frame_info, &rcvPck.au8data[1], sizeof(kernel_params.frame_info));
+                if (copy_to_user(user_params, &kernel_params, sizeof(ioctl_can_frame_param_t))) {
                     pr_err("%s - Faild to copy to user %d", __FUNCTION__, ret);
                     ret = -EFAULT;
                 }
@@ -207,6 +234,7 @@ static int usb_can_probe(struct usb_interface *interface, const struct usb_devic
                     pr_err("Failed to allocate bulk_in buffer");
                     goto error;
                 }
+                dev_info(&interface->dev, "endpoint[%d]->wMaxPacketSize: %d", i, endpoint->wMaxPacketSize); // max endpoint size of TM4C123G is 64
             }
 
 		if (!dev->bulk_out_endpointAddr &&

@@ -1,7 +1,7 @@
 CC = g++
 CPPFLAGS = -fPIC -Wall -Wextra -O2 -g
 DEFINES = -D USER_APP
-INCLUDEPATH = -I./ -I../
+INCLUDEPATH = -I./ -I../ 
 RM = rm -f
 TARGET = test
 
