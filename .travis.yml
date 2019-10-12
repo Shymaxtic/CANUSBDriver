@@ -2,13 +2,9 @@ language: c
 os: linux
 dist: bionic
 
-env:
-  global:
-    - secure: "f4kopqary9P1MAi1aMrDk9gagpOthB0L97wB74qJpBpge2bZDZy2FzampSOTmR4eYFzfU5klZMVe0Kye9AYxYH9pdzN93iComvmyAQwpCrxySIHU4824DSX8gXwkEucfqO5d16S0GI5oHv5pKv+BGJ7VtsofZ/JdHu8VWbgpXCStf3G7mBgOxcnaATz3zHl2r60x3w+6wziVTQIH0A+Ak5v//m7vOW9jpM03aVQXlGCe5nTN2lLy4QN8trNrM01CqUEBYw0dZHDmAVs6SUH4wFDvGCQPhkbfUtiAjHkDshpmiLZZU3zuAt2XU8MsgIgZt6fGOFlSN9jYfmLqxzoHCYfG8YxVG2cFl7MjC9nU9nXYAmz/Tl++3S67+ZVeuMp2Vo78gtpyJoGqMA8c6kCMGplMlJGYC5BevVdne/MhYhZuyrGswr6btzEhJXag6vguZyc6tvyS62cOU2jYEdLkTMAEjeD8AWisqpqFvyHTPwbBSGHG7m/14XXe8kuAEozabe9AMp/WYTWYgQDFXmVIK5LbQ8t/EvKmkD+Vbg3hQNkmKEaBhVwZQEBLmIjbmeaA/2HiC7zg+x969SHkcI7Fptinz0dXCqQ7u6aircFyqOmfZNLAJFMxIl5/1Og4Uuc5gozLkCtwqdUvmlv8DSWfKmvPxQVZeZVEyP/unoNCR5A="
-
 before_install:
   - sudo apt-get install linux-headers-`uname -r`
-  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-
+  - echo -n | openssl s_client -connect https://scan.coverity.com:443 | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' | sudo tee -a /etc/ssl/certs/ca-certificates.crt
 
 addons:
   coverity_scan:
@@ -18,7 +14,7 @@ addons:
     notification_email: shymaxtic@gmail.com
     build_command_prepend: ""
     build_command: "make"
-    branch_pattern: coverity_scan
+    branch_pattern: master
     
 script: 
   - make
