@@ -26,11 +26,11 @@
 #include "usb_can_data.h"
 
 
-#define D_MAX_FRAME_PACKED  4
+#define D_MAX_FRAME_PACKED  ((int)D_USB_PACKET_MAX_LEN/sizeof(usb_can_frame_info_t))          // maximum number of frames in one receiving.
 
 typedef struct {
     uint8_t                 u8frame_nums;
-    usb_can_frame_info_t    frame_info[D_MAX_FRAME_PACKED];         // list of usb_can_frame_info_t
+    usb_can_frame_info_t    frame_info[D_MAX_FRAME_PACKED];
 } ioctl_can_frame_param_t;
 
 #define USB_CAN_FILE_IOCTL_PING             _IOW('q', 102, uint32_t)
