@@ -181,12 +181,12 @@ static struct file_operations usb_can_fops = {
  */
 static struct usb_class_driver usb_can_class = {
 	.name = "usb/can%d",
-	.fops = &usb_can_fops,
+	.fops = &usb_can_fops, // to register as the character device
 	.minor_base = USB_CAN_MINOR_BASE,
 };
 
 /**
- * function called when usb device is plugged.
+ * function called when usb device is plugged that matches the device ID pattern this driver registered with the USB core.
  **/
 static int usb_can_probe(struct usb_interface *interface, const struct usb_device_id *id) {
     struct usb_can_dev_t *dev = NULL;
@@ -206,6 +206,9 @@ static int usb_can_probe(struct usb_interface *interface, const struct usb_devic
     kref_init(&dev->kref);
 
     // increase ref counter on usb device. I am refering to usb device on this interface.
+
+    // A USB device driver commonly has to convert data from a given struct usb_interface structure into a struct usb_device structure that the USB core needs for a wide range of function calls
+    // To do this, the function interface_to_usbdev is provided.
     dev->udev = usb_get_dev(interface_to_usbdev(interface));
     dev->uif = interface;
 
@@ -246,9 +249,12 @@ static int usb_can_probe(struct usb_interface *interface, const struct usb_devic
 		goto error;
 	}
 
+    // The USB driver needs to retrieve the local data structure that is associated with this struct usb_interface later in the lifecycle of the device
     // save my device struct to this interface device.
     usb_set_intfdata(interface, dev);
 
+    // The USB driver must call the usb_register_dev function in the probe function when it wants to register a device with the USB core
+    // The struct usb_class_driver is used to define a number of different parameters that the USB driver wants the USB core to know when registering for a minor number.
     // ready to register device now.
     ret = usb_register_dev(interface, &usb_can_class);
     if (ret) {
@@ -287,6 +293,7 @@ static void usb_can_disconnect(struct usb_interface *interface) {
     dev_info(&interface->dev, "USB CAN device #%d now disconnected", minor);
 }
 
+// the information registered to Linux USB subsystem
 static struct usb_driver usb_can_driver = {
     .name = "qusbcan",
     .id_table = id_table,
